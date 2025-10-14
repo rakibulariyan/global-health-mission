@@ -12,6 +12,144 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+                /* Printable Member Card Styles */
+        .member-card-printable {
+            width: 100%;
+            max-width: 800px;
+            border: 2px solid #2c7fb8;
+            border-radius: 15px;
+            background: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin: 0 auto;
+        }
+        
+        .card-header-print {
+            background: linear-gradient(135deg, #2c7fb8, #7fcdbb);
+            color: white;
+            padding: 20px;
+            border-radius: 13px 13px 0 0;
+        }
+        
+        .logo-print {
+            font-size: 2rem;
+            font-weight: bold;
+            background: white;
+            color: #2c7fb8;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: auto;
+        }
+        
+        .text-small {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .card-body-print {
+            padding: 30px;
+        }
+        
+        .member-photo-placeholder {
+            width: 120px;
+            height: 150px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .member-photo-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        
+        .member-details h4 {
+            color: #2c7fb8;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #7fcdbb;
+            padding-bottom: 10px;
+        }
+        
+        .details-table {
+            width: 100%;
+        }
+        
+        .details-table td {
+            padding: 8px 5px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .details-table td:first-child {
+            width: 120px;
+            color: #666;
+        }
+        
+        .qr-section {
+            text-align: center;
+            border-left: 2px solid #f0f0f0;
+            padding-left: 20px;
+        }
+        
+        .qr-code-print {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 10px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background: white;
+        }
+        
+        .qr-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin: 0;
+        }
+        
+        .card-footer-print {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 0 0 13px 13px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .benefits-text {
+            color: #28a745;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        
+        .security-features {
+            text-align: center;
+        }
+        
+        /* Print Styles */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printableCard, #printableCard * {
+                visibility: visible;
+            }
+            #printableCard {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                box-shadow: none;
+                border: 2px solid #000;
+            }
+            .modal-footer, .modal-header, .btn-close {
+                display: none !important;
+            }
+        }
         :root {
             --primary: #2c7fb8;
             --secondary: #7fcdbb;
@@ -540,27 +678,86 @@
             </div>
         </div>
 
-        <!-- View Member Card Modal -->
+                <!-- View Member Card Modal -->
         <div class="modal fade" id="viewCardModal" tabindex="-1">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Member ID Card</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body text-center">
-                        <div class="member-card">
-                            <h4>Global Health Mission</h4>
-                            <p class="text-muted">Healthcare Membership Card</p>
-                            <div id="cardQRCode" class="qr-code mb-3"></div>
-                            <h5 id="cardMemberName">Member Name</h5>
-                            <p class="mb-1">Member ID: <strong id="cardMemberId">GHM000000</strong></p>
-                            <p class="mb-1">Valid Until: <strong id="cardExpiryDate">DD/MM/YYYY</strong></p>
-                            <p class="mb-0 text-muted small">50% Discount at Partner Facilities</p>
+                    <div class="modal-body">
+                        <!-- Printable Card Container -->
+                        <div id="printableCard" class="member-card-printable">
+                            <div class="card-header-print">
+                                <div class="row align-items-center">
+                                    <div class="col-8">
+                                        <h3 class="mb-0">🌍 Global Health Mission</h3>
+                                        <p class="mb-0 text-small">Healthcare Membership Card</p>
+                                    </div>
+                                    <div class="col-4 text-end">
+                                        <div class="logo-print">GHM</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card-body-print">
+                                <div class="row">
+                                    <div class="col-8">
+                                        <div class="member-photo-placeholder">
+                                            <i class="fas fa-user-circle"></i>
+                                            <small>Photo</small>
+                                        </div>
+                                        <div class="member-details">
+                                            <h4 id="cardMemberNamePrint">Member Name</h4>
+                                            <table class="details-table">
+                                                <tr>
+                                                    <td><strong>Member ID:</strong></td>
+                                                    <td id="cardMemberIdPrint">GHM000000</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Valid Until:</strong></td>
+                                                    <td id="cardExpiryDatePrint">DD/MM/YYYY</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Phone:</strong></td>
+                                                    <td id="cardPhonePrint">0000000000</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="qr-section">
+                                            <div id="cardQRCodePrint" class="qr-code-print"></div>
+                                            <p class="qr-label">Scan for Verification</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card-footer-print">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <p class="benefits-text">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                            Eligible for 50% discount at partner hospitals, pharmacies & diagnostic centers
+                                        </p>
+                                        <div class="security-features">
+                                            <small class="text-muted">
+                                                <i class="fas fa-shield-alt"></i>
+                                                This card is non-transferable • Report loss immediately
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-success" id="downloadCardBtn">
+                            <i class="fas fa-download me-2"></i>Download PDF
+                        </button>
                         <button type="button" class="btn btn-primary" id="printCardBtn">
                             <i class="fas fa-print me-2"></i>Print Card
                         </button>
@@ -568,8 +765,6 @@
                 </div>
             </div>
         </div>
-    </div>
-
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1128,18 +1323,25 @@
             }
         }
 
-        // Member card functions
+                // Enhanced Member card functions
         function showMemberCard(member) {
-            document.getElementById('cardMemberName').textContent = member.name;
-            document.getElementById('cardMemberId').textContent = member.member_id;
-            document.getElementById('cardExpiryDate').textContent = new Date(member.expiry_date).toLocaleDateString();
+            // Update printable card content
+            document.getElementById('cardMemberNamePrint').textContent = member.name;
+            document.getElementById('cardMemberIdPrint').textContent = member.member_id;
+            document.getElementById('cardExpiryDatePrint').textContent = new Date(member.expiry_date).toLocaleDateString();
+            document.getElementById('cardPhonePrint').textContent = member.phone;
             
-            const qrContainer = document.getElementById('cardQRCode');
-            qrContainer.innerHTML = '';
-            QRCode.toCanvas(qrContainer, member.member_id, function(error) {
+            // Generate QR code for printable version
+            const qrContainerPrint = document.getElementById('cardQRCodePrint');
+            qrContainerPrint.innerHTML = '';
+            QRCode.toCanvas(qrContainerPrint, member.member_id, { 
+                width: 140,
+                margin: 1
+            }, function(error) {
                 if (error) console.error(error);
             });
             
+            // Show modal
             const modal = new bootstrap.Modal(document.getElementById('viewCardModal'));
             modal.show();
         }
@@ -1147,6 +1349,15 @@
         function printMemberCard() {
             window.print();
         }
+
+        // New function for PDF download
+        function downloadMemberCard() {
+            alert('PDF download feature would be implemented here!\nFor now, use Print → Save as PDF');
+            // In production, you would use libraries like jsPDF or html2pdf.js
+        }
+
+        // Add event listener for download button
+        document.getElementById('downloadCardBtn')?.addEventListener('click', downloadMemberCard);
 
         // Validation functions
         async function validateMemberCard() {
