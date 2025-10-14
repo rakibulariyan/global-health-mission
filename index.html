@@ -129,6 +129,45 @@
         .security-features {
             text-align: center;
         }
+        /* PAN Card Size */
+.member-card-printable.pan-size {
+    width: 340px;
+    height: 214px;
+    max-width: 340px;
+}
+
+.pan-size .card-header-print {
+    padding: 8px 12px;
+}
+
+.pan-size .logo-print {
+    width: 30px;
+    height: 30px;
+    font-size: 0.9rem;
+}
+
+.pan-size .card-body-print {
+    padding: 10px 12px;
+}
+
+.pan-size .member-photo-placeholder {
+    width: 60px;
+    height: 70px;
+}
+
+.pan-size .member-photo-placeholder i {
+    font-size: 1.8rem;
+}
+
+.pan-size .qr-code-print {
+    width: 80px;
+    height: 80px;
+}
+
+.pan-size .card-footer-print {
+    padding: 8px 12px;
+    font-size: 0.7rem;
+}
         
         /* Print Styles */
         @media print {
@@ -1245,10 +1284,14 @@
                     ]);
 
                 alert(`Member registered successfully! Member ID: ${memberId}`);
-                bootstrap.Modal.getInstance(document.getElementById('addMemberModal')).hide();
-                document.getElementById('memberForm').reset();
-                loadMembers();
+bootstrap.Modal.getInstance(document.getElementById('addMemberModal')).hide();
+document.getElementById('memberForm').reset();
+loadMembers();
 
+// AUTO-SHOW THE MEMBER CARD - ADD THESE 4 LINES:
+setTimeout(() => {
+    showNewMemberCard(memberId);
+}, 1000);
             } catch (error) {
                 alert('Error registering member: ' + error.message);
             }
@@ -1325,25 +1368,30 @@
 
                 // Enhanced Member card functions
         function showMemberCard(member) {
-            // Update printable card content
-            document.getElementById('cardMemberNamePrint').textContent = member.name;
-            document.getElementById('cardMemberIdPrint').textContent = member.member_id;
-            document.getElementById('cardExpiryDatePrint').textContent = new Date(member.expiry_date).toLocaleDateString();
-            document.getElementById('cardPhonePrint').textContent = member.phone;
-            
-            // Generate QR code for printable version
-            const qrContainerPrint = document.getElementById('cardQRCodePrint');
-            qrContainerPrint.innerHTML = '';
-            QRCode.toCanvas(qrContainerPrint, member.member_id, { 
-                width: 140,
-                margin: 1
-            }, function(error) {
-                if (error) console.error(error);
-            });
-            
-            // Show modal
-            const modal = new bootstrap.Modal(document.getElementById('viewCardModal'));
-            modal.show();
+    // Make card PAN size
+    const printableCard = document.getElementById('printableCard');
+    printableCard.classList.add('pan-size');
+    
+    // Update card content
+    document.getElementById('cardMemberNamePrint').textContent = member.name;
+    document.getElementById('cardMemberIdPrint').textContent = member.member_id;
+    document.getElementById('cardExpiryDatePrint').textContent = new Date(member.expiry_date).toLocaleDateString();
+    document.getElementById('cardPhonePrint').textContent = member.phone;
+    
+    // Generate QR code
+    const qrContainerPrint = document.getElementById('cardQRCodePrint');
+    qrContainerPrint.innerHTML = '';
+    QRCode.toCanvas(qrContainerPrint, member.member_id, { 
+        width: 70,
+        margin: 1
+    }, function(error) {
+        if (error) console.error(error);
+    });
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('viewCardModal'));
+    modal.show();
+}
         }
 
         function printMemberCard() {
@@ -1523,6 +1571,22 @@
         window.deleteEmployee = deleteEmployee;
         window.deleteMember = deleteMember;
         window.renewMember = renewMember;
+        // NEW FUNCTION TO SHOW CARD AFTER REGISTRATION
+async function showNewMemberCard(memberId) {
+    try {
+        const { data: member, error } = await supabase
+            .from('members')
+            .select('*')
+            .eq('member_id', memberId)
+            .single();
+            
+        if (member && !error) {
+            showMemberCard(member);
+        }
+    } catch (error) {
+        console.log('Could not show card automatically');
+    }
+}
     </script>
 </body>
 </html>
