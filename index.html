@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Health Mission - Management System</title>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c7fb8;
+            --secondary: #7fcdbb;
+            --accent: #edf8b1;
+            --dark: #253237;
+            --light: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: none;
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .dashboard-card {
+            background: linear-gradient(135deg, var(--primary), #41b6c4);
+            color: white;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        
+        .sidebar {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+        
+        .sidebar .nav-link {
+            color: var(--dark);
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background-color: #1d6fa5;
+        }
+        
+        .table th {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .badge-active {
+            background-color: #28a745;
+        }
+        
+        .badge-expired {
+            background-color: #dc3545;
+        }
+        
+        .section {
+            display: none;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        .member-card {
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            padding: 20px;
+            background: white;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .qr-code {
+            width: 150px;
+            height: 150px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            border: 1px solid #ddd;
+        }
+        
+        .logo {
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        .partner-check {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Section -->
+    <div id="loginSection" class="login-container">
+        <div class="text-center mb-4">
+            <h2><i class="fas fa-globe-americas me-2 text-primary"></i>Global Health Mission</h2>
+            <p class="text-muted">Management System Login</p>
+        </div>
+        
+        <form id="loginForm">
+            <div class="mb-3">
+                <label for="loginEmail" class="form-label">Email</label>
+                <input type="email" class="form-control" id="loginEmail" required>
+            </div>
+            <div class="mb-3">
+                <label for="loginPassword" class="form-label">Password</label>
+                <input type="password" class="form-control" id="loginPassword" required>
+            </div>
+            <div class="mb-3">
+                <label for="loginRole" class="form-label">Role</label>
+                <select class="form-select" id="loginRole" required>
+                    <option value="">Select Role</option>
+                    <option value="admin">Admin</option>
+                    <option value="employee">Employee</option>
+                    <option value="partner">Partner</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+        </form>
+        
+        <div class="mt-4">
+            <h6>Demo Accounts:</h6>
+            <small class="text-muted">
+                Admin: admin@globalhealth.org / password: admin123<br>
+                Employee: employee@globalhealth.org / password: employee123<br>
+                Partner: partner@globalhealth.org / password: partner123
+            </small>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="appSection" class="hidden">
+        <!-- Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container">
+                <a class="navbar-brand logo" href="#">
+                    <i class="fas fa-globe-americas me-2"></i>Global Health Mission
+                </a>
+                <div class="navbar-nav ms-auto">
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i> <span id="userName">User</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" id="logoutBtn"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container mt-4">
+            <div class="row">
+                <!-- Sidebar -->
+                <div class="col-lg-3">
+                    <div class="sidebar p-3">
+                        <ul class="nav flex-column" id="mainNav">
+                            <li class="nav-item">
+                                <a class="nav-link active" href="#" data-section="dashboard">
+                                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                                </a>
+                            </li>
+                            <li class="nav-item admin-only">
+                                <a class="nav-link" href="#" data-section="employees">
+                                    <i class="fas fa-users me-2"></i> Employee Management
+                                </a>
+                            </li>
+                            <li class="nav-item employee-admin">
+                                <a class="nav-link" href="#" data-section="members">
+                                    <i class="fas fa-id-card me-2"></i> Member Management
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-section="validation">
+                                    <i class="fas fa-hospital me-2"></i> Partner Validation
+                                </a>
+                            </li>
+                            <li class="nav-item admin-only">
+                                <a class="nav-link" href="#" data-section="reports">
+                                    <i class="fas fa-chart-bar me-2"></i> Reports
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Main Content -->
+                <div class="col-lg-9">
+                    <!-- Dashboard Section -->
+                    <div class="section active" id="dashboard">
+                        <h2 class="mb-4">Dashboard Overview</h2>
+                        
+                        <div class="row" id="dashboardStats">
+                            <!-- Stats will be loaded dynamically -->
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0">Recent Activity</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="recentActivity">
+                                            <!-- Activity will be loaded dynamically -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0">Quick Actions</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-grid gap-2">
+                                            <button class="btn btn-primary employee-admin" data-section="members">
+                                                <i class="fas fa-plus-circle me-2"></i>Register New Member
+                                            </button>
+                                            <button class="btn btn-outline-primary admin-only" data-section="employees">
+                                                <i class="fas fa-user-plus me-2"></i>Add Employee
+                                            </button>
+                                            <button class="btn btn-outline-primary" data-section="validation">
+                                                <i class="fas fa-qrcode me-2"></i>Validate Member Card
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Employee Management Section -->
+                    <div class="section" id="employees">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2>Employee Management</h2>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+                                <i class="fas fa-plus me-2"></i>Add Employee
+                            </button>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="employeesTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Role</th>
+                                                <th>Phone</th>
+                                                <th>Email</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Employees will be loaded dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Member Management Section -->
+                    <div class="section" id="members">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2>Member Management</h2>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMemberModal">
+                                <i class="fas fa-plus me-2"></i>Register New Member
+                            </button>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control" id="memberSearch" placeholder="Search members...">
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="membersTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Member ID</th>
+                                                <th>Name</th>
+                                                <th>Phone</th>
+                                                <th>Join Date</th>
+                                                <th>Expiry Date</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Members will be loaded dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Partner Validation Section -->
+                    <div class="section" id="validation">
+                        <h2 class="mb-4">Partner Validation</h2>
+                        
+                        <div class="card partner-check">
+                            <div class="card-body">
+                                <h5 class="card-title text-center mb-4">Validate Member Card</h5>
+                                
+                                <div class="mb-4">
+                                    <label for="cardId" class="form-label">Enter Member ID or Scan QR Code</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="cardId" placeholder="GHM001235">
+                                        <button class="btn btn-outline-secondary" type="button" id="scanQRBtn">
+                                            <i class="fas fa-camera"></i> Scan QR
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button class="btn btn-primary" id="validateBtn">
+                                        <i class="fas fa-search me-2"></i>Validate Card
+                                    </button>
+                                </div>
+                                
+                                <div id="validationResult" class="mt-4" style="display: none;">
+                                    <!-- Validation result will be shown here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reports Section -->
+                    <div class="section" id="reports">
+                        <h2 class="mb-4">Reports & Analytics</h2>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0">Monthly Sign-ups</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="signupsChart" height="250"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0">Membership Status</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="statusChart" height="250"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0">Financial Summary</h5>
+                                        <button class="btn btn-sm btn-light" id="exportReportsBtn">
+                                            <i class="fas fa-download me-1"></i> Export
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover" id="financialTable">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Month</th>
+                                                        <th>New Members</th>
+                                                        <th>Renewals</th>
+                                                        <th>Total Revenue</th>
+                                                        <th>Active Members</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- Financial data will be loaded dynamically -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Employee Modal -->
+        <div class="modal fade" id="addEmployeeModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add New Employee</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="employeeForm">
+                            <div class="mb-3">
+                                <label for="empName" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="empName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="empRole" class="form-label">Role</label>
+                                <select class="form-select" id="empRole" required>
+                                    <option value="">Select Role</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="employee">Employee</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="empPhone" class="form-label">Phone</label>
+                                <input type="tel" class="form-control" id="empPhone" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="empEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="empEmail" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="empPassword" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="empPassword" required>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="saveEmployeeBtn">Save Employee</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Member Modal -->
+        <div class="modal fade" id="addMemberModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Register New Member</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="memberForm">
+                            <div class="mb-3">
+                                <label for="memberName" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="memberName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="memberPhone" class="form-label">Phone</label>
+                                <input type="tel" class="form-control" id="memberPhone" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="memberEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="memberEmail">
+                            </div>
+                            <div class="mb-3">
+                                <label for="memberAddress" class="form-label">Address</label>
+                                <textarea class="form-control" id="memberAddress" rows="2"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="paymentReceived">
+                                    <label class="form-check-label" for="paymentReceived">
+                                        ₹300 joining fee received
+                                    </label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="saveMemberBtn">Register Member</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View Member Card Modal -->
+        <div class="modal fade" id="viewCardModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Member ID Card</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <div class="member-card">
+                            <h4>Global Health Mission</h4>
+                            <p class="text-muted">Healthcare Membership Card</p>
+                            <div id="cardQRCode" class="qr-code mb-3"></div>
+                            <h5 id="cardMemberName">Member Name</h5>
+                            <p class="mb-1">Member ID: <strong id="cardMemberId">GHM000000</strong></p>
+                            <p class="mb-1">Valid Until: <strong id="cardExpiryDate">DD/MM/YYYY</strong></p>
+                            <p class="mb-0 text-muted small">50% Discount at Partner Facilities</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" id="printCardBtn">
+                            <i class="fas fa-print me-2"></i>Print Card
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Supabase Configuration -->
+    <script>
+        // Supabase configuration - YOU WILL GET THESE FROM SUPABASE.COM
+        const SUPABASE_URL = 'https://drjbgbbejgeskrnhxfyc.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyamJnYmJlamdlc2tybmh4ZnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzNDIwMzEsImV4cCI6MjA3NTkxODAzMX0.FgtUm_FnWZxwx89Z1_Z_Oj8PcgU9p-a_tTk7lNG3DNw';
+        
+        // Initialize Supabase
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Current user and role
+        let currentUser = null;
+        let currentRole = null;
+    </script>
+    
+    <!-- Application Logic -->
+    <script>
+        // DOM Elements
+        const loginSection = document.getElementById('loginSection');
+        const appSection = document.getElementById('appSection');
+        const loginForm = document.getElementById('loginForm');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const mainNav = document.getElementById('mainNav');
+        const userName = document.getElementById('userName');
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        // Application initialization
+        async function initializeApp() {
+            // Check if user is already logged in
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (session) {
+                currentUser = session.user;
+                await loadUserRole();
+                showApp();
+            } else {
+                showLogin();
+            }
+            
+            setupEventListeners();
+        }
+
+        // Event listeners setup
+        function setupEventListeners() {
+            // Login form
+            loginForm.addEventListener('submit', handleLogin);
+            
+            // Logout
+            logoutBtn.addEventListener('submit', handleLogout);
+            
+            // Navigation
+            document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    navigateToSection(this.getAttribute('data-section'));
+                });
+            });
+            
+            // Quick actions
+            document.querySelectorAll('.btn[data-section]').forEach(button => {
+                button.addEventListener('click', function() {
+                    navigateToSection(this.getAttribute('data-section'));
+                });
+            });
+            
+            // Employee management
+            document.getElementById('saveEmployeeBtn').addEventListener('click', saveEmployee);
+            
+            // Member management
+            document.getElementById('saveMemberBtn').addEventListener('click', saveMember);
+            document.getElementById('memberSearch').addEventListener('input', searchMembers);
+            
+            // Validation
+            document.getElementById('validateBtn').addEventListener('click', validateMemberCard);
+            document.getElementById('scanQRBtn').addEventListener('click', simulateQRScan);
+            
+            // Reports
+            document.getElementById('exportReportsBtn').addEventListener('click', exportReports);
+            
+            // Print card
+            document.getElementById('printCardBtn').addEventListener('click', printMemberCard);
+        }
+
+        // Authentication handlers
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const role = document.getElementById('loginRole').value;
+            
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                
+                if (error) throw error;
+                
+                currentUser = data.user;
+                currentRole = role;
+                await saveUserRole(role);
+                showApp();
+                
+            } catch (error) {
+                alert('Login failed: ' + error.message);
+            }
+        }
+
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            currentUser = null;
+            currentRole = null;
+            showLogin();
+        }
+
+        // Navigation
+        function navigateToSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all nav links
+            document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Show target section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Activate corresponding nav link
+            document.querySelector(`.nav-link[data-section="${sectionId}"]`).classList.add('active');
+            
+            // Load section data
+            loadSectionData(sectionId);
+        }
+
+        // Load data for specific section
+        async function loadSectionData(sectionId) {
+            switch(sectionId) {
+                case 'dashboard':
+                    await loadDashboardData();
+                    break;
+                case 'employees':
+                    await loadEmployees();
+                    break;
+                case 'members':
+                    await loadMembers();
+                    break;
+                case 'reports':
+                    await loadReports();
+                    break;
+            }
+        }
+
+        // Show/hide sections based on role
+        function showApp() {
+            loginSection.classList.add('hidden');
+            appSection.classList.remove('hidden');
+            
+            // Update UI based on role
+            updateUIForRole();
+            
+            // Load initial data
+            loadDashboardData();
+        }
+
+        function showLogin() {
+            loginSection.classList.remove('hidden');
+            appSection.classList.add('hidden');
+            loginForm.reset();
+        }
+
+        // Role-based UI updates
+        function updateUIForRole() {
+            // Show/hide elements based on role
+            document.querySelectorAll('.admin-only').forEach(el => {
+                el.style.display = currentRole === 'admin' ? 'block' : 'none';
+            });
+            
+            document.querySelectorAll('.employee-admin').forEach(el => {
+                el.style.display = (currentRole === 'admin' || currentRole === 'employee') ? 'block' : 'none';
+            });
+            
+            // Update user name
+            userName.textContent = currentUser?.email || 'User';
+        }
+
+        // Data management functions
+        async function loadDashboardData() {
+            // This would load real data from Supabase
+            const stats = {
+                activeMembers: 1250,
+                totalCards: 1380,
+                recentRenewals: 42,
+                newSignups: 35
+            };
+            
+            document.getElementById('dashboardStats').innerHTML = `
+                <div class="col-md-3">
+                    <div class="card dashboard-card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Total Active Members</h5>
+                            <div class="stat-number">${stats.activeMembers}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card dashboard-card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Total Cards Issued</h5>
+                            <div class="stat-number">${stats.totalCards}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card dashboard-card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Recent Renewals</h5>
+                            <div class="stat-number">${stats.recentRenewals}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card dashboard-card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">New Sign-ups This Month</h5>
+                            <div class="stat-number">${stats.newSignups}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function loadEmployees() {
+            // This would load employees from Supabase
+            const employees = [
+                {name: "John Doe", role: "Admin", phone: "1234567890", email: "john@globalhealth.org"},
+                {name: "Jane Smith", role: "Employee", phone: "9876543210", email: "jane@globalhealth.org"},
+                {name: "Robert Johnson", role: "Employee", phone: "5551234567", email: "robert@globalhealth.org"}
+            ];
+            
+            const tbody = document.querySelector('#employeesTable tbody');
+            tbody.innerHTML = employees.map(emp => `
+                <tr>
+                    <td>${emp.name}</td>
+                    <td><span class="badge ${emp.role === 'Admin' ? 'bg-primary' : 'bg-secondary'}">${emp.role}</span></td>
+                    <td>${emp.phone}</td>
+                    <td>${emp.email}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadMembers() {
+            // This would load members from Supabase
+            const members = [
+                {id: "GHM001235", name: "Rajesh Kumar", phone: "9876543210", joinDate: "15 Oct 2023", expiryDate: "14 Oct 2024", status: "Active"},
+                {id: "GHM001234", name: "Priya Sharma", phone: "8765432109", joinDate: "10 Sep 2023", expiryDate: "09 Sep 2024", status: "Active"},
+                {id: "GHM001200", name: "Amit Patel", phone: "7654321098", joinDate: "05 Aug 2022", expiryDate: "04 Aug 2023", status: "Expired"}
+            ];
+            
+            const tbody = document.querySelector('#membersTable tbody');
+            tbody.innerHTML = members.map(member => `
+                <tr>
+                    <td>${member.id}</td>
+                    <td>${member.name}</td>
+                    <td>${member.phone}</td>
+                    <td>${member.joinDate}</td>
+                    <td>${member.expiryDate}</td>
+                    <td><span class="badge ${member.status === 'Active' ? 'badge-active' : 'badge-expired'}">${member.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary view-card" data-member='${JSON.stringify(member)}'><i class="fas fa-eye"></i></button>
+                        <button class="btn btn-sm btn-outline-success"><i class="fas fa-sync-alt"></i></button>
+                        <button class="btn btn-sm btn-outline-info"><i class="fas fa-id-card"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            // Add event listeners to view card buttons
+            document.querySelectorAll('.view-card').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const member = JSON.parse(this.getAttribute('data-member'));
+                    showMemberCard(member);
+                });
+            });
+        }
+
+        // Member card functions
+        function showMemberCard(member) {
+            document.getElementById('cardMemberName').textContent = member.name;
+            document.getElementById('cardMemberId').textContent = member.id;
+            document.getElementById('cardExpiryDate').textContent = member.expiryDate;
+            
+            // Generate QR code
+            const qrContainer = document.getElementById('cardQRCode');
+            qrContainer.innerHTML = '';
+            QRCode.toCanvas(qrContainer, member.id, function(error) {
+                if (error) console.error(error);
+            });
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('viewCardModal'));
+            modal.show();
+        }
+
+        function printMemberCard() {
+            window.print();
+        }
+
+        // Validation functions
+        async function validateMemberCard() {
+            const cardId = document.getElementById('cardId').value;
+            const resultDiv = document.getElementById('validationResult');
+            
+            if (!cardId) {
+                alert('Please enter a Member ID');
+                return;
+            }
+            
+            // Simulate validation - in real app, this would check Supabase
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h5><i class="fas fa-check-circle me-2"></i>Valid Card</h5>
+                    <p class="mb-1"><strong>Member:</strong> Rajesh Kumar</p>
+                    <p class="mb-1"><strong>Member ID:</strong> ${cardId}</p>
+                    <p class="mb-1"><strong>Expiry Date:</strong> 14 Oct 2024</p>
+                    <p class="mb-0"><strong>Status:</strong> Eligible for 50% discount</p>
+                </div>
+            `;
+        }
+
+        function simulateQRScan() {
+            // In a real app, this would use device camera
+            document.getElementById('cardId').value = 'GHM001235';
+            alert('QR scanning simulated - Member ID filled');
+        }
+
+        // Save functions
+        async function saveEmployee() {
+            const form = document.getElementById('employeeForm');
+            const formData = new FormData(form);
+            
+            // In real app, this would save to Supabase
+            alert('Employee saved successfully!');
+            
+            // Close modal and refresh
+            bootstrap.Modal.getInstance(document.getElementById('addEmployeeModal')).hide();
+            form.reset();
+            loadEmployees();
+        }
+
+        async function saveMember() {
+            const form = document.getElementById('memberForm');
+            const paymentReceived = document.getElementById('paymentReceived').checked;
+            
+            if (!paymentReceived) {
+                alert('Please confirm that the ₹300 joining fee has been received.');
+                return;
+            }
+            
+            // In real app, this would save to Supabase
+            alert('Member registered successfully!');
+            
+            // Close modal and refresh
+            bootstrap.Modal.getInstance(document.getElementById('addMemberModal')).hide();
+            form.reset();
+            loadMembers();
+        }
+
+        // Search function
+        function searchMembers() {
+            const searchTerm = document.getElementById('memberSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#membersTable tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        }
+
+        // Reports functions
+        async function loadReports() {
+            // Initialize charts
+            initializeCharts();
+            
+            // Load financial data
+            const financialData = [
+                {month: 'October 2023', newMembers: 35, renewals: 42, revenue: '₹23,100', activeMembers: 1250},
+                {month: 'September 2023', newMembers: 28, renewals: 38, revenue: '₹19,800', activeMembers: 1215},
+                {month: 'August 2023', newMembers: 31, renewals: 45, revenue: '₹22,800', activeMembers: 1187}
+            ];
+            
+            const tbody = document.querySelector('#financialTable tbody');
+            tbody.innerHTML = financialData.map(data => `
+                <tr>
+                    <td>${data.month}</td>
+                    <td>${data.newMembers}</td>
+                    <td>${data.renewals}</td>
+                    <td>${data.revenue}</td>
+                    <td>${data.activeMembers}</td>
+                </tr>
+            `).join('');
+        }
+
+        function initializeCharts() {
+            // Monthly Sign-ups Chart
+            const signupsCtx = document.getElementById('signupsChart').getContext('2d');
+            new Chart(signupsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                    datasets: [{
+                        label: 'New Sign-ups',
+                        data: [25, 30, 28, 35, 40, 38, 42, 31, 28, 35],
+                        backgroundColor: '#2c7fb8'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            
+            // Membership Status Chart
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Active', 'Expired', 'Pending Renewal'],
+                    datasets: [{
+                        data: [1250, 130, 42],
+                        backgroundColor: ['#28a745', '#dc3545', '#ffc107']
+                    }]
+                }
+            });
+        }
+
+        function exportReports() {
+            alert('Reports exported successfully!');
+            // In real app, this would generate CSV/PDF
+        }
+
+        // User role management (simplified - in real app, use Supabase RLS)
+        async function loadUserRole() {
+            // This would load from user_metadata in real app
+            currentRole = localStorage.getItem('ghm_user_role') || 'employee';
+        }
+
+        async function saveUserRole(role) {
+            localStorage.setItem('ghm_user_role', role);
+        }
+    </script>
+</body>
+</html>
