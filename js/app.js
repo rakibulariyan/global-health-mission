@@ -572,33 +572,71 @@ async function renewMember(memberId) {
     }
 }
 
-// Show member card
+// Enhanced member card display function
 function showMemberCard(member) {
+    console.log('Showing member card for:', member);
+    
     // Make card PAN size
     const printableCard = document.getElementById('printableCard');
     printableCard.classList.add('pan-size');
     
-    // Update card content
-    document.getElementById('cardMemberNamePrint').textContent = member.name;
-    document.getElementById('cardMemberIdPrint').textContent = member.member_id;
-    document.getElementById('cardFatherNamePrint').textContent = member.father_name || 'N/A';
-    document.getElementById('cardAgePrint').textContent = member.age || 'N/A';
-    document.getElementById('cardExpiryDatePrint').textContent = new Date(member.expiry_date).toLocaleDateString();
-    document.getElementById('cardPhonePrint').textContent = member.phone;
+    // Update card content with null checks
+    document.getElementById('cardMemberNamePrint').textContent = member.name || 'Not provided';
+    document.getElementById('cardMemberIdPrint').textContent = member.member_id || 'Not provided';
+    document.getElementById('cardFatherNamePrint').textContent = member.father_name || 'Not provided';
+    document.getElementById('cardAgePrint').textContent = member.age ? member.age + ' years' : 'Not provided';
+    document.getElementById('cardExpiryDatePrint').textContent = member.expiry_date ? new Date(member.expiry_date).toLocaleDateString() : 'Not provided';
+    document.getElementById('cardPhonePrint').textContent = member.phone || 'Not provided';
     document.getElementById('cardIssuedByPrint').textContent = member.created_by || 'System';
     
-    // Generate QR code
+    // Generate QR code with error handling
     const qrContainerPrint = document.getElementById('cardQRCodePrint');
     qrContainerPrint.innerHTML = '';
-    QRCode.toCanvas(qrContainerPrint, member.member_id, { 
-        width: 70,
-        margin: 1
-    }, function(error) {
-        if (error) console.error(error);
-    });
+    
+    if (member.member_id) {
+        try {
+            QRCode.toCanvas(qrContainerPrint, member.member_id, { 
+                width: 70,
+                margin: 1,
+                color: {
+                    dark: '#2c7fb8',
+                    light: '#ffffff'
+                }
+            }, function(error) {
+                if (error) {
+                    console.error('QR Code generation error:', error);
+                    // Show placeholder if QR fails
+                    qrContainerPrint.innerHTML = `
+                        <div style="width: 70px; height: 70px; background: #f8f9fa; border: 1px dashed #ddd; display: flex; align-items: center; justify-content: center; color: #666; font-size: 8px;">
+                            QR Code<br>Not Available
+                        </div>
+                    `;
+                }
+            });
+        } catch (error) {
+            console.error('QR Code error:', error);
+            qrContainerPrint.innerHTML = `
+                <div style="width: 70px; height: 70px; background: #f8f9fa; border: 1px dashed #ddd; display: flex; align-items: center; justify-content: center; color: #666; font-size: 8px;">
+                    QR Error
+                </div>
+            `;
+        }
+    } else {
+        qrContainerPrint.innerHTML = `
+            <div style="width: 70px; height: 70px; background: #f8f9fa; border: 1px dashed #ddd; display: flex; align-items: center; justify-content: center; color: #666; font-size: 8px;">
+                No Member ID
+            </div>
+        `;
+    }
     
     // Show modal
-    $('#viewCardModal').modal('show');
+    try {
+        $('#viewCardModal').modal('show');
+        console.log('Modal shown successfully');
+    } catch (error) {
+        console.error('Modal error:', error);
+        alert('Error showing member card. Please try again.');
+    }
 }
 
 function printMemberCard() {
