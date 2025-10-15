@@ -644,7 +644,25 @@ function printMemberCard() {
 }
 
 function downloadMemberCard() {
-    alert('PDF download feature would be implemented here!\nFor now, use Print → Save as PDF');
+    // Get member data from the current card display
+    const memberData = {
+        memberId: document.getElementById('cardMemberIdPrint').textContent,
+        name: document.getElementById('cardMemberNamePrint').textContent,
+        fatherName: document.getElementById('cardFatherNamePrint').textContent,
+        age: parseInt(document.getElementById('cardAgePrint').textContent) || 0,
+        phone: document.getElementById('cardPhonePrint').textContent,
+        expiryDate: new Date(document.getElementById('cardExpiryDatePrint').textContent),
+        joinDate: new Date(), // Use current date as join date
+        createdBy: document.getElementById('cardIssuedByPrint').textContent,
+        email: '',
+        address: ''
+    };
+    
+    // Generate and download PDF
+    generateMemberPDF(memberData);
+    
+    // Show success message
+    alert('Member card PDF download started!');
 }
 
 // Validation functions
