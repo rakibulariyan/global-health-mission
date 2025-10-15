@@ -815,3 +815,396 @@ async function saveUserRole(role) {
 window.deleteEmployee = deleteEmployee;
 window.deleteMember = deleteMember;
 window.renewMember = renewMember;
+// Search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Search button event listener
+    document.getElementById('searchBtn').addEventListener('click', performSearch);
+    
+    // Reset search button event listener
+    document.getElementById('resetSearchBtn').addEventListener('click', resetSearch);
+    
+    // Enter key support for search fields
+    const searchInputs = ['searchMemberId', 'searchName', 'searchPhone'];
+    searchInputs.forEach(inputId => {
+        document.getElementById(inputId).addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+    });
+});
+
+// Perform search function
+async function performSearch() {
+    const searchCriteria = {
+        memberId: document.getElementById('searchMemberId').value.trim(),
+        name: document.getElementById('searchName').value.trim(),
+        phone: document.getElementById('searchPhone').value.trim(),
+        status: document.getElementById('searchStatus').value,
+        dateFrom: document.getElementById('searchDateFrom').value,
+        dateTo: document.getElementById('searchDateTo').value
+    };
+    
+    // Show loading state
+    const searchResultsBody = document.getElementById('searchResultsBody');
+    searchResultsBody.innerHTML = `
+        <tr>
+            <td colspan="9" class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <p class="mt-2">Searching members...</p>
+            </td>
+        </tr>
+    `;
+    
+    try {
+        // Get all members from Supabase
+        const { data: members, error } = await supabase
+            .from('members')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        // Filter members based on search criteria
+        const filteredMembers = members.filter(member => {
+            // Member ID filter
+            if (searchCriteria.memberId && !member.member_id.toLowerCase().includes(searchCriteria.memberId.toLowerCase())) {
+                return false;
+            }
+            
+            // Name filter
+            if (searchCriteria.name && !member.full_name.toLowerCase().includes(searchCriteria.name.toLowerCase())) {
+                return false;
+            }
+            
+            // Phone filter
+            if (searchCriteria.phone && !member.phone.includes(searchCriteria.phone)) {
+                return false;
+            }
+            
+            // Status filter
+            if (searchCriteria.status && member.status !== searchCriteria.status) {
+                return false;
+            }
+            
+            // Date range filter
+            if (searchCriteria.dateFrom) {
+                const joinDate = new Date(member.join_date);
+                const fromDate = new Date(searchCriteria.dateFrom);
+                if (joinDate < fromDate) return false;
+            }
+            
+            if (searchCriteria.dateTo) {
+                const joinDate = new Date(member.join_date);
+                const toDate = new Date(searchCriteria.dateTo);
+                toDate.setHours(23, 59, 59, 999); // End of the day
+                if (joinDate > toDate) return false;
+            }
+            
+            return true;
+        });
+        
+        displaySearchResults(filteredMembers);
+        
+    } catch (error) {
+        console.error('Search error:', error);
+        searchResultsBody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error performing search. Please try again.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Display search results
+function displaySearchResults(members) {
+    const searchResultsBody = document.getElementById('searchResultsBody');
+    
+    if (members.length === 0) {
+        searchResultsBody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center text-muted">
+                    <i class="fas fa-search me-2"></i>
+                    No members found matching your search criteria.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    let html = '';
+    
+    members.forEach(member => {
+        const joinDate = new Date(member.join_date).toLocaleDateString();
+        const expiryDate = new Date(member.expiry_date).toLocaleDateString();
+        
+        // Status badge
+        let statusBadge = '';
+        switch(member.status) {
+            case 'active':
+                statusBadge = '<span class="badge badge-success">Active</span>';
+                break;
+            case 'expired':
+                statusBadge = '<span class="badge badge-danger">Expired</span>';
+                break;
+            case 'pending':
+                statusBadge = '<span class="badge badge-warning">Pending</span>';
+                break;
+            default:
+                statusBadge = '<span class="badge badge-secondary">Unknown</span>';
+        }
+        
+        html += `
+            <tr>
+                <td><strong>${member.member_id}</strong></td>
+                <td>${member.full_name}</td>
+                <td>${member.father_name || 'N/A'}</td>
+                <td>${member.phone}</td>
+                <td>${member.age}</td>
+                <td>${joinDate}</td>
+                <td>${expiryDate}</td>
+                <td>${statusBadge}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-info btn-view-member" data-member-id="${member.member_id}" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-primary btn-view-card" data-member-id="${member.member_id}" title="View Card">
+                            <i class="fas fa-id-card"></i>
+                        </button>
+                        <button class="btn btn-success btn-renew" data-member-id="${member.member_id}" title="Renew Membership">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    
+    searchResultsBody.innerHTML = html;
+    
+    // Add event listeners to action buttons
+    addSearchResultEventListeners();
+}
+
+// Add event listeners to search result action buttons
+function addSearchResultEventListeners() {
+    // View member details
+    document.querySelectorAll('.btn-view-member').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const memberId = this.getAttribute('data-member-id');
+            viewMemberDetails(memberId);
+        });
+    });
+    
+    // View member card
+    document.querySelectorAll('.btn-view-card').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const memberId = this.getAttribute('data-member-id');
+            viewMemberCard(memberId);
+        });
+    });
+    
+    // Renew membership
+    document.querySelectorAll('.btn-renew').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const memberId = this.getAttribute('data-member-id');
+            renewMembership(memberId);
+        });
+    });
+}
+
+// Reset search form
+function resetSearch() {
+    document.getElementById('searchMemberId').value = '';
+    document.getElementById('searchName').value = '';
+    document.getElementById('searchPhone').value = '';
+    document.getElementById('searchStatus').value = '';
+    document.getElementById('searchDateFrom').value = '';
+    document.getElementById('searchDateTo').value = '';
+    
+    // Clear results
+    document.getElementById('searchResultsBody').innerHTML = `
+        <tr>
+            <td colspan="9" class="text-center text-muted">
+                Use the search form above to find members
+            </td>
+        </tr>
+    `;
+}
+
+// View member details (you can implement this based on your existing functionality)
+async function viewMemberDetails(memberId) {
+    try {
+        const { data: member, error } = await supabase
+            .from('members')
+            .select('*')
+            .eq('member_id', memberId)
+            .single();
+        
+        if (error) throw error;
+        
+        // Create a modal or use existing modal to show detailed information
+        showMemberDetailsModal(member);
+        
+    } catch (error) {
+        console.error('Error fetching member details:', error);
+        alert('Error loading member details. Please try again.');
+    }
+}
+
+// Show member details in a modal
+function showMemberDetailsModal(member) {
+    // You can create a new modal or use an existing one
+    // For now, let's show an alert with basic info
+    const joinDate = new Date(member.join_date).toLocaleDateString();
+    const expiryDate = new Date(member.expiry_date).toLocaleDateString();
+    
+    const modalHtml = `
+        <div class="modal fade" id="memberDetailsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Member Details - ${member.member_id}</h5>
+                        <button type="button" class="close" data-dismiss="modal">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Personal Information</h6>
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td><strong>Full Name:</strong></td>
+                                        <td>${member.full_name}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Father's Name:</strong></td>
+                                        <td>${member.father_name || 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Age:</strong></td>
+                                        <td>${member.age}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Phone:</strong></td>
+                                        <td>${member.phone}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Email:</strong></td>
+                                        <td>${member.email || 'N/A'}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Membership Information</h6>
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td><strong>Member ID:</strong></td>
+                                        <td>${member.member_id}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Join Date:</strong></td>
+                                        <td>${joinDate}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Expiry Date:</strong></td>
+                                        <td>${expiryDate}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Status:</strong></td>
+                                        <td>${member.status}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Address:</strong></td>
+                                        <td>${member.address || 'N/A'}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="viewMemberCard('${member.member_id}')">
+                            <i class="fas fa-id-card me-2"></i>View Card
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('memberDetailsModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to body and show it
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    $('#memberDetailsModal').modal('show');
+}
+
+// Renew membership function
+async function renewMembership(memberId) {
+    if (!confirm('Are you sure you want to renew this membership for 1 year?')) {
+        return;
+    }
+    
+    try {
+        const { data: member, error } = await supabase
+            .from('members')
+            .select('*')
+            .eq('member_id', memberId)
+            .single();
+        
+        if (error) throw error;
+        
+        // Calculate new expiry date (1 year from current expiry or from now if expired)
+        const currentExpiry = new Date(member.expiry_date);
+        const now = new Date();
+        const newExpiryDate = currentExpiry > now ? 
+            new Date(currentExpiry.setFullYear(currentExpiry.getFullYear() + 1)) :
+            new Date(now.setFullYear(now.getFullYear() + 1));
+        
+        // Update member in database
+        const { error: updateError } = await supabase
+            .from('members')
+            .update({
+                expiry_date: newExpiryDate.toISOString().split('T')[0],
+                status: 'active',
+                updated_at: new Date().toISOString()
+            })
+            .eq('member_id', memberId);
+        
+        if (updateError) throw updateError;
+        
+        // Show success message
+        alert('Membership renewed successfully!');
+        
+        // Refresh search results if we're on the search page
+        if (document.getElementById('search').classList.contains('active')) {
+            performSearch();
+        }
+        
+    } catch (error) {
+        console.error('Error renewing membership:', error);
+        alert('Error renewing membership. Please try again.');
+    }
+}
+
+// Quick search from dashboard (if you want to add this)
+function quickSearch(searchTerm) {
+    // Switch to search section
+    switchSection('search');
+    
+    // Set search term and perform search
+    document.getElementById('searchName').value = searchTerm;
+    setTimeout(() => {
+        performSearch();
+    }, 100);
+}
