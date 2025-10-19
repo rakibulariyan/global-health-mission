@@ -36,7 +36,7 @@ async function initializeApp() {
     setupEventListeners();
 }
 
-// Event listeners setup
+// Event listeners setup - UPDATED VERSION
 function setupEventListeners() {
     // Login form
     loginForm.addEventListener('submit', handleLogin);
@@ -44,19 +44,20 @@ function setupEventListeners() {
     // Logout
     logoutBtn.addEventListener('click', handleLogout);
     
-    // Navigation
-    document.querySelectorAll('.nav-link[data-section]').forEach(link => {
-        link.addEventListener('click', function(e) {
+    // Navigation - FIXED: Add proper event delegation
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('.nav-link[data-section]') || e.target.closest('.nav-link[data-section]')) {
             e.preventDefault();
-            navigateToSection(this.getAttribute('data-section'));
-        });
-    });
-    
-    // Quick actions
-    document.querySelectorAll('.btn[data-section]').forEach(button => {
-        button.addEventListener('click', function() {
-            navigateToSection(this.getAttribute('data-section'));
-        });
+            const link = e.target.matches('.nav-link[data-section]') ? e.target : e.target.closest('.nav-link[data-section]');
+            navigateToSection(link.getAttribute('data-section'));
+        }
+        
+        // Quick actions
+        if (e.target.matches('.btn[data-section]') || e.target.closest('.btn[data-section]')) {
+            e.preventDefault();
+            const button = e.target.matches('.btn[data-section]') ? e.target : e.target.closest('.btn[data-section]');
+            navigateToSection(button.getAttribute('data-section'));
+        }
     });
     
     // Employee management
@@ -73,6 +74,38 @@ function setupEventListeners() {
     // Print card
     document.getElementById('printCardBtn').addEventListener('click', printMemberCard);
     document.getElementById('downloadCardBtn').addEventListener('click', downloadMemberCard);
+    
+    // PROFILE DROPDOWN LINKS - ADD THESE
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('[data-section="profile"]') || e.target.closest('[data-section="profile"]')) {
+            e.preventDefault();
+            navigateToSection('profile');
+        }
+    });
+}
+
+// Modal initialization - ADD THIS FUNCTION
+function initializeModals() {
+    // Close modals when clicking outside or pressing ESC
+    $(document).on('show.bs.modal', '.modal', function () {
+        // Close other open modals
+        $('.modal').not($(this)).modal('hide');
+    });
+    
+    // Reset modals when they close
+    $(document).on('hidden.bs.modal', '.modal', function () {
+        // Remove backdrop if multiple modals were opened
+        if ($('.modal.show').length > 0) {
+            $('body').addClass('modal-open');
+        }
+    });
+    
+    // Handle modal backdrop click
+    $(document).on('click', '.modal', function(e) {
+        if (e.target === this) {
+            $(this).modal('hide');
+        }
+    });
 }
 
 // Login handler - UPDATED VERSION
@@ -180,7 +213,8 @@ function showApp() {
     appSection.classList.remove('hidden');
     updateUIForRole();
     loadDashboardData();
-    loadUserPhoto(); // ADD THIS LINE - Update the existing showApp function
+    loadUserPhoto();
+    initializeModals();
 }
 
 // ======== ADD PROFILE PHOTO MANAGEMENT CODE STARTING HERE ========
