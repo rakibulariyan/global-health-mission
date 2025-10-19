@@ -354,3 +354,38 @@
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
+/* User Photo Styles */
+.img-circle {
+    border-radius: 50% !important;
+}
+
+.dropdown-header {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    padding: 20px;
+}
+
+.dropdown-header img,
+.dropdown-header i {
+    border: 3px solid rgba(255,255,255,0.3);
+}
+
+/* Photo Upload Button */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary), #1a5a8a);
+}
+
+/* Progress Bar */
+.progress {
+    height: 8px;
+}
+
+.progress-bar {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    transition: width 0.3s ease;
+}

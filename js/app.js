@@ -170,6 +170,56 @@ function showApp() {
     loadDashboardData();
 }
 
+// ... your existing code above ...
+
+function showApp() {
+    loginSection.classList.add('hidden');
+    appSection.classList.remove('hidden');
+    updateUIForRole();
+    loadDashboardData();
+    loadUserPhoto(); // ADD THIS LINE - Update the existing showApp function
+}
+
+// ======== ADD PROFILE PHOTO MANAGEMENT CODE STARTING HERE ========
+
+// Profile Photo Management
+let currentUserPhotoUrl = null;
+
+// Load user photo
+async function loadUserPhoto() {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+            // Try to get user photo from employees table or storage
+            const { data: employee, error } = await supabase
+                .from('employees')
+                .select('photo_url')
+                .eq('email', user.email)
+                .single();
+                
+            if (employee && employee.photo_url) {
+                currentUserPhotoUrl = employee.photo_url;
+                displayUserPhoto(employee.photo_url);
+            } else {
+                // No photo - show default icon
+                hideUserPhoto();
+            }
+            
+            // Update dropdown user info
+            document.getElementById('dropdownUserName').textContent = employee?.name || user.email;
+            document.getElementById('dropdownUserEmail').textContent = user.email;
+        }
+    } catch (error) {
+        console.error('Error loading user photo:', error);
+        hideUserPhoto();
+    }
+}
+
+// ... rest of the profile photo functions (displayUserPhoto, hideUserPhoto, etc.)
+
+// ======== END OF PROFILE PHOTO MANAGEMENT CODE ========
+
 function showLogin() {
     loginSection.classList.remove('hidden');
     appSection.classList.add('hidden');
@@ -1207,4 +1257,56 @@ function quickSearch(searchTerm) {
     setTimeout(() => {
         performSearch();
     }, 100);
+    // Forgot Password Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Forgot Password functionality
+    const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+    const backToLogin = document.getElementById('backToLogin');
+    const sendResetLink = document.getElementById('sendResetLink');
+    const loginForm = document.getElementById('loginForm');
+    const forgotPasswordSection = document.getElementById('forgotPasswordSection');
+    
+    if (forgotPasswordLink) {
+        forgotPasswordLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            loginForm.style.display = 'none';
+            forgotPasswordSection.style.display = 'block';
+        });
+    }
+    
+    if (backToLogin) {
+        backToLogin.addEventListener('click', function(e) {
+            e.preventDefault();
+            forgotPasswordSection.style.display = 'none';
+            loginForm.style.display = 'block';
+        });
+    }
+    
+    if (sendResetLink) {
+        sendResetLink.addEventListener('click', async function() {
+            const email = document.getElementById('resetEmail').value;
+            
+            if (!email) {
+                alert('Please enter your email address');
+                return;
+            }
+            
+            try {
+                const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.href,
+                });
+                
+                if (error) throw error;
+                
+                alert('Password reset link sent to your email! Check your inbox.');
+                forgotPasswordSection.style.display = 'none';
+                loginForm.style.display = 'block';
+                document.getElementById('resetEmail').value = '';
+                
+            } catch (error) {
+                alert('Error sending reset link: ' + error.message);
+            }
+        });
+    }
+});
 }
