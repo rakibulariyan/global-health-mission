@@ -75,13 +75,12 @@ function setupEventListeners() {
     document.getElementById('downloadCardBtn').addEventListener('click', downloadMemberCard);
 }
 
-// Login handler
+// Login handler - UPDATED VERSION
 async function handleLogin(e) {
     e.preventDefault();
     
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
-    const role = document.getElementById('loginRole').value;
     
     try {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -92,30 +91,34 @@ async function handleLogin(e) {
         if (error) throw error;
         
         currentUser = data.user;
-        currentRole = role;
-        await saveUserRole(role);
+        
+        // Auto-detect user role from database
+        await loadUserRoleFromDatabase();
         showApp();
         
     } catch (error) {
-        // If login fails, try to sign up
-        try {
-            const { data, error } = await supabase.auth.signUp({
-                email: email,
-                password: password,
-                options: {
-                    data: {
-                        role: role
-                    }
+        // If login fails, show error
+        alert('Login failed: ' + error.message);
+        
+        // Optional: Try to sign up if user doesn't exist
+        if (error.message.includes('Invalid login credentials')) {
+            const createAccount = confirm('No account found with this email. Would you like to create one? (Admin only)');
+            if (createAccount) {
+                try {
+                    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                        email: email,
+                        password: password,
+                    });
+                    
+                    if (signUpError) throw signUpError;
+                    
+                    alert('Account created! Please login again. This account will have basic employee permissions.');
+                    loginForm.reset();
+                    
+                } catch (signUpError) {
+                    alert('Error creating account: ' + signUpError.message);
                 }
-            });
-            
-            if (error) throw error;
-            
-            alert('Account created successfully! Please login again.');
-            loginForm.reset();
-            
-        } catch (signUpError) {
-            alert('Login failed: ' + error.message);
+            }
         }
     }
 }
@@ -219,6 +222,35 @@ async function loadUserPhoto() {
 // ... rest of the profile photo functions (displayUserPhoto, hideUserPhoto, etc.)
 
 // ======== END OF PROFILE PHOTO MANAGEMENT CODE ========
+
+// Auto-detect user role from database
+async function loadUserRoleFromDatabase() {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+            // Check employees table for role
+            const { data: employee, error } = await supabase
+                .from('employees')
+                .select('role')
+                .eq('email', user.email)
+                .single();
+                
+            if (employee && employee.role) {
+                currentRole = employee.role;
+            } else {
+                // Default to employee role if not found
+                currentRole = 'employee';
+            }
+            
+            // Save role for future sessions
+            localStorage.setItem('ghm_user_role', currentRole);
+        }
+    } catch (error) {
+        console.error('Error loading user role:', error);
+        currentRole = localStorage.getItem('ghm_user_role') || 'employee';
+    }
+}
 
 function showLogin() {
     loginSection.classList.remove('hidden');
