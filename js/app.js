@@ -1207,4 +1207,56 @@ function quickSearch(searchTerm) {
     setTimeout(() => {
         performSearch();
     }, 100);
+    // Forgot Password Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Forgot Password functionality
+    const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+    const backToLogin = document.getElementById('backToLogin');
+    const sendResetLink = document.getElementById('sendResetLink');
+    const loginForm = document.getElementById('loginForm');
+    const forgotPasswordSection = document.getElementById('forgotPasswordSection');
+    
+    if (forgotPasswordLink) {
+        forgotPasswordLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            loginForm.style.display = 'none';
+            forgotPasswordSection.style.display = 'block';
+        });
+    }
+    
+    if (backToLogin) {
+        backToLogin.addEventListener('click', function(e) {
+            e.preventDefault();
+            forgotPasswordSection.style.display = 'none';
+            loginForm.style.display = 'block';
+        });
+    }
+    
+    if (sendResetLink) {
+        sendResetLink.addEventListener('click', async function() {
+            const email = document.getElementById('resetEmail').value;
+            
+            if (!email) {
+                alert('Please enter your email address');
+                return;
+            }
+            
+            try {
+                const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.href,
+                });
+                
+                if (error) throw error;
+                
+                alert('Password reset link sent to your email! Check your inbox.');
+                forgotPasswordSection.style.display = 'none';
+                loginForm.style.display = 'block';
+                document.getElementById('resetEmail').value = '';
+                
+            } catch (error) {
+                alert('Error sending reset link: ' + error.message);
+            }
+        });
+    }
+});
 }
