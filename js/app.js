@@ -1386,4 +1386,71 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// ================= PROFILE SECTION HANDLING =================
+
+// Load profile info
+async function loadUserProfile() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return alert('No active user session.');
+
+  const { data: employee, error } = await supabase
+    .from('employees')
+    .select('*')
+    .eq('email', user.email)
+    .single();
+
+  if (error) {
+    console.error('Error loading profile:', error);
+    alert('Unable to load profile.');
+    return;
+  }
+
+  document.getElementById('profileId').value = employee.id;
+  document.getElementById('profileRole').value = employee.role;
+  document.getElementById('profileName').value = employee.name;
+  document.getElementById('profileEmail').value = employee.email;
+  document.getElementById('profilePhone').value = employee.phone || '';
+}
+
+// Save profile updates
+document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+  const name = document.getElementById('profileName').value.trim();
+  const phone = document.getElementById('profilePhone').value.trim();
+  const password = document.getElementById('profilePassword').value.trim();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return alert('User not found.');
+
+  try {
+    // Update employee info in table
+    const { error: updateError } = await supabase
+      .from('employees')
+      .update({ name, phone })
+      .eq('email', user.email);
+
+    if (updateError) throw updateError;
+
+    // Update password if provided
+    if (password) {
+      const { error: pwError } = await supabase.auth.updateUser({ password });
+      if (pwError) throw pwError;
+    }
+
+    alert('Profile updated successfully!');
+    document.getElementById('profilePassword').value = '';
+  } catch (err) {
+    console.error('Error updating profile:', err);
+    alert('Failed to update profile: ' + err.message);
+  }
+});
+
+// Hook profile navigation
+document.addEventListener('click', function (e) {
+  if (e.target.matches('[data-section="profile"]') || e.target.closest('[data-section="profile"]')) {
+    e.preventDefault();
+    navigateToSection('profile');
+    loadUserProfile();
+  }
+});
 }

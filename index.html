@@ -121,6 +121,51 @@
                 <i class="fas fa-user-circle fa-3x" id="dropdownUserIcon"></i>
                 <p class="mb-0 mt-2" id="dropdownUserName">User Name</p>
                 <small id="dropdownUserEmail">user@example.com</small>
+                <section id="profile" class="section">
+  <div class="container mt-4">
+    <h3 class="mb-3"><i class="fas fa-user-circle me-2"></i>My Profile</h3>
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <form id="profileForm">
+          <div class="row">
+            <div class="col-md-6">
+              <label>Employee ID</label>
+              <input type="text" class="form-control" id="profileId" readonly>
+            </div>
+            <div class="col-md-6">
+              <label>Role</label>
+              <input type="text" class="form-control" id="profileRole" readonly>
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col-md-6">
+              <label>Full Name</label>
+              <input type="text" class="form-control" id="profileName">
+            </div>
+            <div class="col-md-6">
+              <label>Email</label>
+              <input type="email" class="form-control" id="profileEmail" readonly>
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col-md-6">
+              <label>Phone</label>
+              <input type="text" class="form-control" id="profilePhone">
+            </div>
+            <div class="col-md-6">
+              <label>Change Password</label>
+              <input type="password" class="form-control" id="profilePassword" placeholder="Enter new password">
+            </div>
+          </div>
+          <div class="mt-4 text-end">
+            <button type="button" class="btn btn-primary" id="saveProfileBtn">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
             </div>
             <div class="dropdown-divider"></div>
             
