@@ -1453,4 +1453,12 @@ document.addEventListener('click', function (e) {
     loadUserProfile();
   }
 });
+
+document.addEventListener('click', function (e) {
+  if (e.target.matches('[data-section="profile"]') || e.target.closest('[data-section="profile"]')) {
+    e.preventDefault();
+    navigateToSection('profile');
+    loadUserProfile();
+  }
+});
 }
