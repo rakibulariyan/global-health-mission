@@ -1,3 +1,4 @@
+console.log('=== APP.JS LOADED ===');
 // Supabase configuration
 const SUPABASE_URL = 'https://drjbgbbejgeskrnhxfyc.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRyamJnYmJlamdlc2tybmh4ZnljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzNDIwMzEsImV4cCI6MjA3NTkxODAzMX0.FgtUm_FnWZxwx89Z1_Z_Oj8PcgU9p-a_tTk7lNG3DNw';
@@ -24,6 +25,8 @@ document.addEventListener('DOMContentLoaded', function() {
 // Application initialization
 async function initializeApp() {
     const { data: { session } } = await supabase.auth.getSession();
+
+    console.log('=== INITIALIZE APP CALLED ===')
     
     if (session) {
         currentUser = session.user;
@@ -38,6 +41,7 @@ async function initializeApp() {
 
 // Event listeners setup - UPDATED VERSION
 function setupEventListeners() {
+    console.log('=== EVENT LISTENERS SETUP ===');
     // Login form
     loginForm.addEventListener('submit', handleLogin);
     
@@ -91,6 +95,13 @@ function initializeModals() {
         // Close other open modals
         $('.modal').not($(this)).modal('hide');
     });
+
+    // Fix stuck overlay issue
+$(document).on('hidden.bs.modal', function () {
+  $('.modal-backdrop').remove();
+  $('body').removeClass('modal-open');
+});
+
     
     // Reset modals when they close
     $(document).on('hidden.bs.modal', '.modal', function () {

@@ -242,9 +242,10 @@
                                     </div>
                                     <div class="card-body">
                                         <div class="d-grid gap-2">
-                                            <button class="btn btn-primary employee-admin" data-section="members">
-                                                <i class="fas fa-plus-circle me-2"></i>Register New Member
-                                            </button>
+                                            <button class="btn btn-primary employee-admin" data-toggle="modal" data-target="#addMemberModal">
+  <i class="fas fa-plus-circle me-2"></i>Register New Member
+</button>
+
                                             <button class="btn btn-outline-primary admin-only" data-section="employees">
                                                 <i class="fas fa-user-plus me-2"></i>Add Employee
                                             </button>
@@ -696,7 +697,6 @@
     </div>
     <!-- === END OF CHANGE PHOTO MODAL === -->
 
-    <!-- REQUIRED SCRIPTS -->
     <!-- jQuery -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
     <!-- Bootstrap 4 -->
